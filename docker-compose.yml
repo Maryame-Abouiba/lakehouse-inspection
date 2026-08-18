@@ -1,0 +1,108 @@
+version: "3.8"
+
+networks:
+  lakehouse-net:
+    driver: bridge
+
+volumes:
+  minio-data:
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # Console web
+    environment:
+      MINIO_ROOT_USER: adminn
+      MINIO_ROOT_PASSWORD: password
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - lakehouse-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  rest:
+    image: tabulario/iceberg-rest:latest
+    container_name: iceberg-rest
+    ports:
+      - "8181:8181"
+    environment:
+      AWS_ACCESS_KEY_ID: adminn
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_REGION: us-east-1
+      CATALOG_WAREHOUSE: s3://lakehouse/
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3_ENDPOINT: http://minio:9000
+      CATALOG_S3_PATH__STYLE__ACCESS: "true"
+    depends_on:
+      - minio
+    networks:
+      - lakehouse-net
+
+  spark-iceberg:
+    image: tabulario/spark-iceberg:latest
+    container_name: spark-iceberg
+    depends_on:
+      - rest
+      - minio
+    environment:
+      AWS_ACCESS_KEY_ID: adminn
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_REGION: us-east-1
+    ports:
+      - "8888:8888"   # Jupyter Notebook
+      - "8080:8080"   # Spark Master UI
+      - "7077:7077"   # Spark Master
+    volumes:
+      - ./spark/jobs:/home/iceberg/jobs
+      - ./data/raw:/home/iceberg/data/raw
+      - ./notebooks:/home/iceberg/notebooks
+    networks:
+      - lakehouse-net
+  trino:
+    image: trinodb/trino:latest
+    container_name: trino
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./trino/catalog:/etc/trino/catalog
+    depends_on:
+      - rest
+      - minio
+    networks:
+      - lakehouse-net
+  airflow:
+    image: apache/airflow:2.10.5
+    container_name: airflow
+    ports:
+      - "8082:8080"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
+      _PIP_ADDITIONAL_REQUIREMENTS: docker
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./data/raw:/opt/airflow/data/raw
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: standalone
+    networks:
+      - lakehouse-net
+  metabase:
+    image: metabase/metabase:v0.52.1
+    container_name: metabase
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./metabase/plugins:/plugins
+    depends_on:
+      - trino
+    networks:
+      - lakehouse-net

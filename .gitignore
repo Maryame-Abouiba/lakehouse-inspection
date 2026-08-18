@@ -1,0 +1,31 @@
+# Données brutes et volumineuses
+data/raw/
+data/*.csv
+data/*.json
+
+# Logs Airflow (regénérés à chaque run)
+airflow/logs/
+
+# Warehouse Iceberg / MinIO (données générées, pas du code)
+spark/warehouse/
+**/warehouse/
+
+# Metabase (base de données interne, pas du code source)
+metabase/metabase.db/
+metabase/*.db
+
+# Notebooks Jupyter
+notebooks/.ipynb_checkpoints/
+
+# Python
+**/__pycache__/
+*.pyc
+
+# Secrets
+.env
+
+# Autres
+*.log
+.DS_Store
+notebooks/.Trash-0/
+metabase/plugins/
