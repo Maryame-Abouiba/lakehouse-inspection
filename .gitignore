@@ -29,3 +29,4 @@ notebooks/.ipynb_checkpoints/
 .DS_Store
 notebooks/.Trash-0/
 metabase/plugins/
+kafka-jars/aws-java-sdk-bundle-1.12.262.jar

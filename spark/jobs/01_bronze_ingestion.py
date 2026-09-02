@@ -23,7 +23,9 @@ df_json.withColumn("ingestion_timestamp", current_timestamp()) \
 print("✅ bronze.inspection_missions")
 
 # CSV capteurs
-df_csv = spark.read.option("header", "true").option("inferSchema", "true").csv("/home/iceberg/data/raw/sensors/")
+# CSV capteurs
+df_csv = spark.read.option("header", "true").option("inferSchema", "true") \
+    .csv("s3a://landing-zone/sensors/")
 df_csv.withColumn("ingestion_timestamp", current_timestamp()) \
     .withColumn("source_file", input_file_name()) \
     .writeTo("demo.bronze.sensor_readings").createOrReplace()

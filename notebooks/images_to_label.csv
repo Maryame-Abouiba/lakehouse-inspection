@@ -1,0 +1,6 @@
+filename,processed_s3_path,label
+IMG001.jpg,s3://lakehouse/silver/images_standardized_v2/192f29bc24fa4bce8ab4cb1050bcd6e1.jpg,
+IMG002.jpg,s3://lakehouse/silver/images_standardized_v2/9611f604c7f849849e7cf2ae3f8b457f.jpg,
+IMG003.jpg,s3://lakehouse/silver/images_standardized_v2/4a0bc79908394991ac971f7105c37e80.jpg,
+IMG004.jpg,s3://lakehouse/silver/images_standardized_v2/d07c0b48b876432bad2bc2259efacc43.jpg,
+IMG005.jpg,s3://lakehouse/silver/images_standardized_v2/dbcd634ff0074608aa9cfe68f7f8170b.jpg,
